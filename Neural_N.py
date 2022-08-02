@@ -1,9 +1,31 @@
 """
 Reconstruction Algorithim to predict the primordial power spectrum from Planck data
 
-Machine learning 
+Machine learning model using pytorch that generates a training dataset, trains a neural network and
+predicts Pk from observational data from Planck mission
+
+
+This module allows you to train and make predictions with three different expresions of Pk.
+
+
+Possible mode options:
+
+-Power_law               Original expression of Pk
+-Fourier                 Fourier Series perturbation of the original formula
+-Polynomial              Fifth degree olynomial perturbation of the original formula
+-All                     Create a dataset made up with a colection of the three expressions together
+
+
+
+Pablo Cuadrado
+University of sussex
+pcuadradolo97@gmail.com
 """
 
+
+"""
+Imports of needed libraries
+"""
 import camb
 import numpy as np
 from camb import model, initialpower
@@ -28,11 +50,8 @@ def get_results():
     """
     Calculate the fiducial transfer function
 
-    Returns
-    -------
-    results: A CAMBdata object
-
     """
+
     pars = camb.CAMBparams()
     pars.set_cosmology(H0=67.5, ombh2=0.022, omch2=0.122, mnu=0.06, omk=0, tau=0.06)
     pars.InitPower.set_params(As=2e-9, ns=0.965, r=0)  # 0.9- 1,1  1-3 e-9
@@ -45,20 +64,12 @@ def get_results():
 
 
 def update_results(k, pk, results):
+
     """
     Update a CAMB data object to a new primordial power spectrum
 
-    Parameters
-    ----------
-    k: The wavenumbers for the new power spectrum
-    pk: The new power spectrum, evaluated at k
-    results: The fiducial results object
-
-    Returns
-    -------
-    results: An updated CAMBdata object
-
     """
+
     inflation_params = initialpower.SplinedInitialPower()
     inflation_params.set_scalar_table(k, pk)
     results.power_spectra_from_transfer(inflation_params)
@@ -66,16 +77,9 @@ def update_results(k, pk, results):
 
 
 def get_cmb_cls(results):
+
     """"
     Get the CMB TT Correlation function from a CAMBdata object
-
-    Parameters
-    ----------
-    results: A CAMBdata object
-
-    Returns
-    -------
-    Cls: An array containing the TT Cls
 
     """
 
@@ -83,14 +87,24 @@ def get_cmb_cls(results):
     return cl[2:, 0]
 
 
+
 def Fourier(k, a, b):
+
+    """
+    Calculate a Fourier Series perturbation
+    """
+
     for n in range(len(a)):
         f = 1 + a[n] * np.cos(2 * np.pi * n * k*10) + b[n] * np.sin(2 * np.pi * n * k*10)
 
     return f
 
+
 def Poly(k):
 
+    """
+    Calculate a fifth degree polynomial perturbation
+    """
     a=np.random.rand(1)
     b=np.random.rand(1)
     c=np.random.rand(1)
@@ -103,12 +117,15 @@ def Poly(k):
 
 
 
-def random_n():
-    seed()
-    return random.random()
-
-
 def Power_Spec(k, As, ns, a, b):
+
+    """
+    Calculate primordial power spectrum returning:
+
+    Power-law
+    Fourier Series perturbation
+    Fifth degree polynomial perturbation
+    """
 
     pk_0 = As * (k ** (ns - 1))
 
@@ -116,6 +133,10 @@ def Power_Spec(k, As, ns, a, b):
 
 
 def Cl_plot(k,mode,pk0,pk):
+
+    """
+    Plot Cl for teo different Pk functions
+    """
 
     results = get_results()
     results = update_results(k, pk0, results)
@@ -125,8 +146,6 @@ def Cl_plot(k,mode,pk0,pk):
     results = update_results(k, pk, results)
     cls2 = get_cmb_cls(results)
 
-
-    # fig = plt.figure()
 
     gs = gridspec.GridSpec(2, 1, height_ratios=[2, 1])
 
@@ -145,22 +164,13 @@ def Cl_plot(k,mode,pk0,pk):
     plt.xlabel('$\ell$ ',fontsize=15)
     plt.show()
 
-    """
-    plt.title('TT correlation function', fontsize=20)
-    plt.plot(cls1, color='r', label='Power-law')
-    plt.plot(cls2, label=mode+' perturbation')
-    plt.ylabel('Temperature fluctuations ($\mu K^2$)', fontsize=20, labelpad=8)
-    plt.xlabel('$\ell$', fontsize=20, labelpad=8)
-    plt.legend(fontsize=20)
-    plt.show()
-    """
-    # dir_name = "/Users/pablo/Desktop/Sussex/Master-Astro/Project/plots/p"
-
-    # plt.rcParams["savefig.directory"] = os.chdir(os.path.dirname(dir_name))
-    # plt.savefig("Cls.png")
 
 
 def Power_Spec_Plot(k,mode,pk0,pk):
+
+    """
+    Plot primordial power spectrum functions
+    """
 
 
     fig, ax = plt.subplots()
@@ -174,7 +184,7 @@ def Power_Spec_Plot(k,mode,pk0,pk):
 
     ax.yaxis.set_minor_formatter(ScalarFormatter())
     ax.yaxis.set_major_formatter(ScalarFormatter())
-    # ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y), 0)))).format(y)))
+
 
     plt.title('Primordial power spectrum', fontsize=15)
     plt.legend(fontsize=15)
@@ -184,6 +194,11 @@ def Power_Spec_Plot(k,mode,pk0,pk):
 
 
 def Plots(mode):
+
+    """
+    Plot of both Cl and Pk
+    """
+
 
     a = np.random.uniform(0, 1, 10) / 10
     b = np.random.uniform(0, 1, 10) / 10
@@ -196,7 +211,6 @@ def Plots(mode):
 
     pk=Power_Spec(k,As,ns,a,b)
 
-    print(As, ns)
 
     if mode=='Fourier':
 
@@ -210,47 +224,19 @@ def Plots(mode):
 
 
 
-def Origna_PW():
-    logk = np.linspace(-5, -1.1, 300)
-    k = 10 ** logk
+    else:
+        print(
+            'Mode no valid!\n \nPlease introduce one of the following options:   \n Fourier \n Polynomial ')
+        quit()
 
-    fig = plt.figure()
-    for i in range(3):
-
-        a = np.random.uniform(0, 1, 10) / 10
-        b = np.random.uniform(0, 1, 10) / 10
-
-        As = random.uniform(1e-9, 3e-9)
-        ns = random.uniform(0.9, 1.1)
-
-        pk = Power_Spec(k, As, ns, a, b)
-
-        results = get_results()
-        results = update_results(k, pk[0], results)
-
-        cls1 = get_cmb_cls(results)
-
-
-        plt.plot(k, pk[0] ,
-                 label=('$A_{s}$=' + str(np.round(As*(10**9), 3)) + ' \n$n_{s}=$' + str(np.round(ns, 3))))
-        plt.xscale('log')
-        plt.yscale('log')
-        plt.xlabel('$k (Mpc^{-1})$', fontsize=15, labelpad=8)
-        plt.ylabel('$P_{k}$', fontsize=15, labelpad=8)
-
-        """
-        ax.yaxis.set_minor_formatter(ScalarFormatter())
-        ax.yaxis.set_major_formatter(ScalarFormatter())
-        # ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: ('{{:.{:1d}f}}'.format(int(np.maximum(-np.log10(y), 0)))).format(y)))
-        """
-        plt.title('Primordial power spectrum', fontsize=15)
-        plt.legend(fontsize=12)
-
-    fig.savefig('po')
 
 
 
 def Cl_final(k,mode):
+
+    """
+    Calculate Pk and Cl for each possible mode (or expression of Pk). Adds noise to Cl function
+    """
 
 
     a = np.random.uniform(0, 1, 10) / 10
@@ -327,6 +313,7 @@ def Cl_final(k,mode):
 
         return cl, pk[random_n - 1]
 
+
     else:
         print(
             'Mode no valid!\n \nPlease introduce one of the following options: \n Power_law  \n Fourier \n Polynomial \n All')
@@ -336,9 +323,11 @@ def Cl_final(k,mode):
 
 
 
-
-
 def DataGenerator(N,mode):
+
+    """
+    Prepare data to create training set. Normalize both input and output
+    """
 
     cls = []
     pks = []
@@ -350,23 +339,6 @@ def DataGenerator(N,mode):
     logk = np.linspace(-5, -1.1, 215)
     k = 10 ** logk
 
-
-    """
-    Pk = ['Power_law', 'Fourier', 'Polynomial']
-
-    n = int(N / 3)
-
-    for i in range(n):
-
-        for i in Pk:
-            y = Cl_final(k, mode=i)
-
-            cls.append(y[0])
-            pks.append(y[1])
-
-    pks = np.array(pks)
-    cls = np.array(cls)
-    """
     for i in range(N):
         y = Cl_final(k, mode)
 
@@ -466,6 +438,10 @@ def load_planck():
 
 def Planclk_Plot():
 
+    """
+    Load and plot Planck data
+    """
+
     with open('PlanckBinned.txt') as f:
         lines = f.readlines()
         l_b = []
@@ -492,21 +468,6 @@ def Planclk_Plot():
     plt.show()
 
 
-    Cl=load_planck()
-    Cl = np.array(Cl[0:2499])
-
-    simulator = CMBNativeSimulator(use_cl=['tt'])
-    noiseless_cl = simulator.get_cl(30, Cl)
-    noisy_cl = simulator.get_noisy_cl(30,Cl)
-
-    cl_noisy = noisy_cl * simulator.lav * (simulator.lav - 1) / 2 / np.pi
-    cl_noiseless=noiseless_cl * simulator.lav * (simulator.lav - 1) / 2 / np.pi
-
-    plt.plot(simulator.lav,cl_noiseless)
-    #plt.show()
-    plt.plot(simulator.lav,cl_noisy)
-
-    plt.show()
 
 
 
@@ -517,6 +478,7 @@ def Training(model,mode,n_epochs):
 
     Hyperparameters that define the learning rate of the neural network.
     """
+
     device='cuda:0' if torch.cuda.is_available() else 'cpu'
 
     loss_fn = MSELoss()
@@ -583,15 +545,8 @@ def Training(model,mode,n_epochs):
         t.set_postfix(train_loss=np.average(train_loss), test_loss=np.average(test_loss))
 
 
-    #torch.save(model,'model.pt')
 
     return pk_max,pk_min,Cl_max,Cl_min
-
-
-
-
-
-
 
 
 
@@ -627,7 +582,7 @@ def Plot_training(mode,n_epochs):
 
 
 
-    """ Load and prepare unknown data for the model to make a prediction and see how the model performs """
+    """ Load and prepare unknown data for the model to plot  prediction and see how the model performs """
 
     logk = np.linspace(-5, -1.1, 215)
     k = 10 ** logk
@@ -672,6 +627,8 @@ def Plot_training(mode,n_epochs):
         fig1.savefig(mode+'_train.png')
         plt.close(fig1)
 
+
+
         mode='Polynomial'
         y = Cl_final(k, mode)
 
@@ -706,6 +663,7 @@ def Plot_training(mode,n_epochs):
         #plt.show()
         fig1.savefig(mode + '_train.png')
         plt.close(fig1)
+
 
 
         mode='Fourier'
@@ -827,6 +785,10 @@ def Plot_training(mode,n_epochs):
 
 def Compare_preds():
 
+    """
+    Train and plot predictions for the three different expressions for Pk
+    """
+
     pks = ['Power_law', 'Fourier', 'Polynomial']
 
 
@@ -879,8 +841,11 @@ def Compare_preds():
 
 
 
-
 class CMBNativeSimulator():
+
+    """
+    Convert unbinned Cl to binned Cl and ads noise to the output
+    """
 
     def __init__(self, use_cl=['tt', 'te', 'ee'], path="./data"):
         nbintt = 215
@@ -1000,6 +965,10 @@ class CMBNativeSimulator():
 
 def Noisy():
 
+    """
+    Plot noiseless and noisy Dl function
+    """
+
     logk = np.linspace(-5, -1.1, 215)
     k = 10 ** logk
 
@@ -1052,6 +1021,10 @@ def Noisy():
 
 def Final_Prediction(mode,n_epochs):
 
+    """
+    Train the model and make predictions fro diferent noisy realisations for Dl
+    """
+
     model = torch.nn.Sequential(
         torch.nn.Linear(215, 300),
         torch.nn.ReLU(),
@@ -1085,19 +1058,16 @@ def Final_Prediction(mode,n_epochs):
 
     fig, ax = plt.subplots()
 
-
     logk = np.linspace(-5, -1.1, 215)
     k = 10 ** logk
 
+    """
+    Generate different noisy Dl function and make prediction for each one to plot them all together
+    """
 
     for i in range(10):
 
         noisy_Cl = simulator.get_noisy_cl(30, Dl) * simulator.lav * (simulator.lav - 1) / 2 / np.pi
-
-
-
-        #plt.plot(simulator.lav,noisy_Cl,alpha=0.6)
-
         noisy_Cl_norm = (noisy_Cl - Cl_min) / (Cl_max - Cl_min)
         noisy_Dl = torch.tensor(noisy_Cl_norm, dtype=torch.float32,device='cuda:0' if torch.cuda.is_available() else 'cpu')
         pk_pred = model(noisy_Dl)
@@ -1117,6 +1087,10 @@ def Final_Prediction(mode,n_epochs):
 
 
 def plot_epochs(mode):
+
+    """
+    Train and predict for different number of epochs in the same
+    """
 
     epochs = [5000,10000,15000,20000]
 
@@ -1141,48 +1115,61 @@ def plot_epochs(mode):
 
     plt.xscale('log')
     plt.legend()
-    #plt.show()
     fig4.savefig('epochs.png')
+
+
 
 if __name__ == "__main__":
 
 
-    logk = np.linspace(-5, -1.1, 215)
-    k = 10 ** logk
     """
-    with open('15000.txt') as f:
-        lines = f.readlines()
-        pk_power_law = []
-        for line in lines:
-            line = line.split()
-            line = [float(i) for i in line]
-            pk_power_law.append(line[0])
-            print(pk_power_law)
-
-    plt.plot(k,pk_power_law*(10**9))
-    plt.xscale('log')
-    plt.show()
+    To generate plots for Pk and Cl
+    
+    Introduce one mode:
+    
+    mode='Fourier' 
+    mode='Polynomial'
     """
+    #mode=''
+    #Plots(mode)
 
-    #Plot_training(mode='All',n_epochs=15000)
 
-    #Plots(mode='Polynomial')
 
-    #Final_Prediction(mode='All',n_epochs=20000)
-
+    """
+    To plot Planck data
+    """
     #Planclk_Plot()
 
-    #Final_Prediction(mode='All',n_epochs=15000)
 
-    #Noisy()
+    """
+    To train the model and plot its performance and prediction
+    
+    Introduce n_epochs and one mode:
+    
+    mode='Power_law'
+    mode='Fourier' 
+    mode='Polynomial'
+    mode='All'
+    """
 
-    #Plot_training(mode='Fourier',n_epochs=15000)
-
-    #Final_Prediction(mode='All',n_epochs=20000)
-
-    #Plot_training(mode='Power_law',n_epochs=20000)
-
-    Planclk_Plot()
+    #mode=''
+    #n_epochs=
+    #Plot_training(mode,n_epochs)
 
 
+
+    """
+    To train and plot predictions
+    
+    Introduce n_epochs and one mode:
+    
+    mode='Power_law'
+    mode='Fourier' 
+    mode='Polynomial'
+    mode='All'
+    """
+
+    #mode=''
+    #n_epochs=
+    #Final_Prediction(mode,n_epochs)
 
